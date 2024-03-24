@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 import sqlite3
 from datetime import datetime
 import smtplib
@@ -29,71 +29,73 @@ class InventoryApp:
         # Set font styles
         font_style = ("Helvetica", 14)
 
+        # Create style for rounded buttons
+        self.style = ttk.Style()
+        self.style.configure('TButton', font=font_style, padding=5, relief=tk.RAISED)
+
         # Create labels and entry widgets for adding parts
-        tk.Label(root, text="Part Name:", font=font_style).grid(row=0, column=0, padx=10, pady=5)
-        self.add_part_name_entry = tk.Entry(root, font=font_style)
+        ttk.Label(root, text="Part Name:", font=font_style).grid(row=0, column=0, padx=10, pady=5)
+        self.add_part_name_entry = ttk.Entry(root, font=font_style)
         self.add_part_name_entry.grid(row=0, column=1, padx=10, pady=5)
 
-        tk.Label(root, text="Quantity:", font=font_style).grid(row=1, column=0, padx=10, pady=5)
-        self.add_quantity_entry = tk.Entry(root, font=font_style)
+        ttk.Label(root, text="Quantity:", font=font_style).grid(row=1, column=0, padx=10, pady=5)
+        self.add_quantity_entry = ttk.Entry(root, font=font_style)
         self.add_quantity_entry.grid(row=1, column=1, padx=10, pady=5)
 
-        self.add_button = tk.Button(root, text="Add Part", font=font_style, command=self.add_part)
+        self.add_button = ttk.Button(root, text="Add Part", command=self.add_part)
         self.add_button.grid(row=2, column=0, columnspan=2, padx=10, pady=5)
 
         # Create label and entry widget for using parts
-        tk.Label(root, text="Part Name:", font=font_style).grid(row=3, column=0, padx=10, pady=5)
-        self.use_part_name_entry = tk.Entry(root, font=font_style)
+        ttk.Label(root, text="Part Name:", font=font_style).grid(row=3, column=0, padx=10, pady=5)
+        self.use_part_name_entry = ttk.Entry(root, font=font_style)
         self.use_part_name_entry.grid(row=3, column=1, padx=10, pady=5)
 
-        tk.Label(root, text="Quantity Used:", font=font_style).grid(row=4, column=0, padx=10, pady=5)
-        self.use_quantity_entry = tk.Entry(root, font=font_style)
+        ttk.Label(root, text="Quantity Used:", font=font_style).grid(row=4, column=0, padx=10, pady=5)
+        self.use_quantity_entry = ttk.Entry(root, font=font_style)
         self.use_quantity_entry.grid(row=4, column=1, padx=10, pady=5)
 
-        self.use_button = tk.Button(root, text="Use Part", font=font_style, command=self.use_part)
+        self.use_button = ttk.Button(root, text="Use Part", command=self.use_part)
         self.use_button.grid(row=5, column=0, columnspan=2, padx=10, pady=5)
 
         # Create button for adding quantity to an existing part
-        tk.Label(root, text="Part Name to Add Quantity:", font=font_style).grid(row=6, column=0, padx=10, pady=5)
-        self.add_quantity_to_part_entry = tk.Entry(root, font=font_style)
+        ttk.Label(root, text="Part Name to Add Quantity:", font=font_style).grid(row=6, column=0, padx=10, pady=5)
+        self.add_quantity_to_part_entry = ttk.Entry(root, font=font_style)
         self.add_quantity_to_part_entry.grid(row=6, column=1, padx=10, pady=5)
 
-        tk.Label(root, text="Quantity to Add:", font=font_style).grid(row=7, column=0, padx=10, pady=5)
-        self.quantity_to_add_entry = tk.Entry(root, font=font_style)
+        ttk.Label(root, text="Quantity to Add:", font=font_style).grid(row=7, column=0, padx=10, pady=5)
+        self.quantity_to_add_entry = ttk.Entry(root, font=font_style)
         self.quantity_to_add_entry.grid(row=7, column=1, padx=10, pady=5)
 
-        self.add_quantity_button = tk.Button(root, text="Add Quantity to Part", font=font_style,
-                                             command=self.add_quantity_to_part)
+        self.add_quantity_button = ttk.Button(root, text="Add Quantity to Part", command=self.add_quantity_to_part)
         self.add_quantity_button.grid(row=8, column=0, columnspan=2, padx=10, pady=5)
 
         # Create button for viewing inventory
-        self.view_inventory_button = tk.Button(root, text="View Inventory", font=font_style,
-                                               command=self.view_inventory)
+        self.view_inventory_button = ttk.Button(root, text="View Inventory", command=self.view_inventory)
         self.view_inventory_button.grid(row=9, column=0, columnspan=2, padx=10, pady=5)
 
         # Create button for viewing low quantity parts
-        self.view_low_quantity_button = tk.Button(root, text="View Low Quantity Parts", font=font_style,
-                                                  command=self.show_low_quantity_parts)
+        self.view_low_quantity_button = ttk.Button(root, text="View Low Quantity Parts",
+                                                   command=self.show_low_quantity_parts)
         self.view_low_quantity_button.grid(row=10, column=0, columnspan=2, padx=10, pady=5)
 
         # Create labels and entry widgets for deleting parts
-        tk.Label(root, text="Part Name to Delete:", font=font_style).grid(row=11, column=0, padx=10, pady=5)
-        self.delete_part_name_entry = tk.Entry(root, font=font_style)
+        ttk.Label(root, text="Part Name to Delete:", font=font_style).grid(row=11, column=0, padx=10, pady=5)
+        self.delete_part_name_entry = ttk.Entry(root, font=font_style)
         self.delete_part_name_entry.grid(row=11, column=1, padx=10, pady=5)
 
-        self.delete_button = tk.Button(root, text="Delete Part", font=font_style, command=self.delete_part)
+        self.delete_button = ttk.Button(root, text="Delete Part", command=self.delete_part)
         self.delete_button.grid(row=12, column=0, columnspan=2, padx=10, pady=5)
 
         # Create label and entry widget for searching parts
-        tk.Label(root, text="Search Parts:", font=font_style).grid(row=13, column=0, padx=10, pady=5)
-        self.search_entry = tk.Entry(root, font=font_style)
+        ttk.Label(root, text="Search Parts:", font=font_style).grid(row=13, column=0, padx=10, pady=5)
+        self.search_entry = ttk.Entry(root, font=font_style)
         self.search_entry.grid(row=13, column=1, padx=10, pady=5)
 
-        self.search_button = tk.Button(root, text="Search", font=font_style, command=self.search_parts)
+        self.search_button = ttk.Button(root, text="Search", command=self.search_parts)
         self.search_button.grid(row=14, column=0, columnspan=2, padx=10, pady=5)
 
         # Create label to display last update time
-        self.last_update_label = tk.Label(root, text="", font=font_style)
+        self.last_update_label = ttk.Label(root, text="", font=font_style)
         self.last_update_label.grid(row=15, column=0, columnspan=2, padx=10, pady=5)
 
         # Display last update time
