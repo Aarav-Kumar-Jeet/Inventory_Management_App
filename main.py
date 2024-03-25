@@ -87,20 +87,102 @@ class InventoryApp:
         self.delete_button = ttk.Button(root, text="Delete Part", command=self.delete_part)
         self.delete_button.grid(row=12, column=0, columnspan=2, padx=10, pady=5)
 
-        # Create label and entry widget for searching parts
-        ttk.Label(root, text="Search Parts:", font=font_style).grid(row=13, column=0, padx=10, pady=5)
-        self.search_entry = ttk.Entry(root, font=font_style)
-        self.search_entry.grid(row=13, column=1, padx=10, pady=5)
-
-        self.search_button = ttk.Button(root, text="Search", command=self.search_parts)
-        self.search_button.grid(row=14, column=0, columnspan=2, padx=10, pady=5)
-
         # Create label to display last update time
         self.last_update_label = ttk.Label(root, text="", font=font_style)
         self.last_update_label.grid(row=15, column=0, columnspan=2, padx=10, pady=5)
 
         # Display last update time
         self.display_last_update_time()
+
+        # Create entry widget for using parts
+        self.use_part_name_entry = ttk.Combobox(root, font=font_style)
+        self.use_part_name_entry.grid(row=3, column=1, padx=10, pady=5)
+        self.use_part_name_entry.bind("<KeyRelease>", self.on_key_release)
+
+        # Create entry widget for adding quantity to an existing part
+        self.add_quantity_to_part_entry = ttk.Combobox(root, font=font_style)
+        self.add_quantity_to_part_entry.grid(row=6, column=1, padx=10, pady=5)
+        self.add_quantity_to_part_entry.bind("<KeyRelease>", self.on_key_release)
+
+        # Bind <Return> key events for entry widgets
+        self.add_part_name_entry.bind("<Return>", lambda event: self.move_to_next_field(self.add_quantity_entry))
+        self.add_quantity_entry.bind("<Return>", lambda event: self.move_to_next_field(self.use_part_name_entry))
+        self.use_part_name_entry.bind("<Return>", lambda event: self.move_to_next_field(self.use_quantity_entry))
+        self.use_quantity_entry.bind("<Return>", lambda event: self.move_to_next_field(self.add_quantity_to_part_entry))
+        self.add_quantity_to_part_entry.bind("<Return>",
+                                             lambda event: self.move_to_next_field(self.quantity_to_add_entry))
+        self.quantity_to_add_entry.bind("<Return>", lambda event: self.move_to_next_field(self.add_quantity_button))
+
+    def move_to_next_field(self, next_entry):
+        next_entry.focus_set()  # Set focus to the next entry field
+
+    def move_to_quantity_field(self):
+        if self.use_part_name_entry.get():
+            self.use_quantity_entry.focus_set()  # Set focus to the quantity used entry field
+
+    def set_completion(self, entry_widget, completions):
+        entry_widget["values"] = completions
+
+    def on_key_release(self, event):
+        if event.widget == self.use_part_name_entry:  # Only handle events for the "Use Part" entry
+            entered_text = self.use_part_name_entry.get()
+            completions = self.get_completions(entered_text)
+            if completions:
+                self.use_part_name_entry['values'] = completions
+                self.use_part_name_entry.focus_set()  # Set focus to the entry
+                self.use_part_name_entry.selection_range(len(entered_text), tk.END)  # Select the text
+                self.use_part_name_entry.bind("<Tab>", self.auto_complete)  # Bind Tab key to auto-complete
+        elif event.widget == self.add_quantity_to_part_entry:  # Only handle events for the "Add Quantity to Part" entry
+            entered_text = self.add_quantity_to_part_entry.get()
+            completions = self.get_completions(entered_text)
+            if completions:
+                self.add_quantity_to_part_entry['values'] = completions
+                self.add_quantity_to_part_entry.focus_set()  # Set focus to the entry
+                self.add_quantity_to_part_entry.selection_range(len(entered_text), tk.END)  # Select the text
+                self.add_quantity_to_part_entry.bind("<Tab>", self.auto_complete_add_quantity)  #
+
+    def auto_complete(self, event):
+        selected_item = self.use_part_name_entry.get()
+        completions = self.use_part_name_entry['values']
+        if len(completions) == 1:
+            self.use_part_name_entry.set(completions[0])  # Auto-complete if only one option
+        elif completions:
+            self.show_dropdown_menu(selected_item, completions)
+
+    def auto_complete_add_quantity(self, event):
+        selected_item = self.add_quantity_to_part_entry.get()
+        completions = self.add_quantity_to_part_entry['values']
+        if len(completions) == 1:
+            self.add_quantity_to_part_entry.set(completions[0])  # Auto-complete if only one option
+        elif completions:
+            self.show_dropdown_menu_add_quantity(selected_item, completions)
+
+    def show_dropdown_menu(self, selected_item, completions):
+        # Create a dropdown menu to choose from multiple similar items
+        dropdown_menu = tk.Menu(self.root, tearoff=0)
+        for item in completions:
+            dropdown_menu.add_command(label=item, command=lambda i=item: self.use_part_name_entry.set(i))
+        self.use_part_name_entry.delete(0, tk.END)  # Clear the entry
+        self.use_part_name_entry.focus_set()  # Set focus to the entry
+        self.use_part_name_entry.insert(0, selected_item)  # Insert the original text
+        dropdown_menu.tk_popup(self.use_part_name_entry.winfo_rootx(), self.use_part_name_entry.winfo_rooty() + 25)
+
+    def show_dropdown_menu_add_quantity(self, selected_item, completions):
+        # Create a dropdown menu to choose from multiple similar items
+        dropdown_menu = tk.Menu(self.root, tearoff=0)
+        for item in completions:
+            dropdown_menu.add_command(label=item, command=lambda i=item: self.add_quantity_to_part_entry.set(i))
+        self.add_quantity_to_part_entry.delete(0, tk.END)  # Clear the entry
+        self.add_quantity_to_part_entry.focus_set()  # Set focus to the entry
+        self.add_quantity_to_part_entry.insert(0, selected_item)  # Insert the original text
+        dropdown_menu.tk_popup(self.add_quantity_to_part_entry.winfo_rootx(),
+                               self.add_quantity_to_part_entry.winfo_rooty() + 25)
+
+    def get_completions(self, entered_text):
+        # Fetch completion options from the database based on the entered text
+        self.cursor.execute("SELECT part_name FROM inventory WHERE part_name LIKE ?", (f'%{entered_text}%',))
+        completions = self.cursor.fetchall()
+        return [item[0] for item in completions]
 
     def add_part(self):
         part_name = self.add_part_name_entry.get()
@@ -243,26 +325,14 @@ class InventoryApp:
         except sqlite3.Error as e:
             messagebox.showerror("Error", f"Error deleting part: {e}")
 
-    def search_parts(self):
-        search_query = self.search_entry.get().strip()
-
-        if not search_query:
-            messagebox.showerror("Error", "Please enter search query")
-            return
-
-        self.cursor.execute("SELECT * FROM inventory WHERE part_name LIKE ?", (f'%{search_query}%',))
-        search_result = self.cursor.fetchall()
-
-        if not search_result:
-            messagebox.showinfo("Search Result", "No matching parts found")
-            return
-
-        search_result_str = "\n".join([f"{row[0]}: {row[1]}" for row in search_result])
-        messagebox.showinfo("Search Result", search_result_str)
-
     def display_last_update_time(self):
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.last_update_label.config(text=f"Last Updated: {current_time}")
+
+    def get_part_names(self):
+        self.cursor.execute("SELECT part_name FROM inventory")
+        parts = self.cursor.fetchall()
+        return [part[0] for part in parts]
 
     def send_email_inventory_updated(self):
         # Define a function to send the email
