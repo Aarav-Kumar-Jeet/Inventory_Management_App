@@ -257,26 +257,51 @@ class InventoryApp:
         messagebox.showinfo("Success", f"{quantity_to_add} parts added to {part_name} successfully")
 
     def view_inventory(self):
+        # Create a new window to display the inventory data
+        inventory_window = tk.Toplevel(self.root)
+        inventory_window.title("Inventory")
+
+        # Create search frame
+        search_frame = ttk.Frame(inventory_window)
+        search_frame.pack(pady=10)
+
+        ttk.Label(search_frame, text="Search by Part Name:", font=("Helvetica", 12)).pack(side=tk.LEFT)
+        search_entry = ttk.Entry(search_frame, font=("Helvetica", 12))
+        search_entry.pack(side=tk.LEFT, padx=10)
+
+        # Create a Treeview widget to display inventory data in a grid
+        tree = ttk.Treeview(inventory_window, style="Treeview")
+        tree["columns"] = ("Part Name", "Quantity")
+        tree.heading("#0", text="ID")
+        tree.heading("Part Name", text="Part Name")
+        tree.heading("Quantity", text="Quantity")
+
+        # Function to filter rows based on search query
+        def filter_rows(event=None):
+            query = search_entry.get().lower()
+            for i in tree.get_children():
+                part_name = tree.item(i)["values"][0].lower()
+                if query in part_name:
+                    tree.item(i, open=True)
+                    tree.selection_set(i)
+                    tree.focus(i)
+                else:
+                    tree.item(i, open=False)
+
+        # Bind KeyRelease event to update filter
+        search_entry.bind("<KeyRelease>", filter_rows)
+
+        # Fetch all inventory data
         self.cursor.execute("SELECT * FROM inventory")
         inventory = self.cursor.fetchall()
-        if not inventory:
-            messagebox.showinfo("Inventory", "Inventory is empty")
-        else:
-            # Create a new window to display the inventory data
-            inventory_window = tk.Toplevel(self.root)
-            inventory_window.title("Inventory")
 
-            # Create a Treeview widget to display inventory data in a grid
-            tree = ttk.Treeview(inventory_window, style="Treeview")
-            tree["columns"] = ("Part Name", "Quantity")
-            tree.heading("#0", text="ID")
-            tree.heading("Part Name", text="Part Name")
-            tree.heading("Quantity", text="Quantity")
+        for i, row in enumerate(inventory, start=1):
+            tree.insert("", tk.END, text=str(i), values=row)
 
-            for i, row in enumerate(inventory, start=1):
-                tree.insert("", tk.END, text=str(i), values=row)
+        tree.pack(fill="both", expand=True)
 
-            tree.pack(fill="both", expand=True)
+        # Perform initial filtering
+        filter_rows()
 
     def show_low_quantity_parts(self):
         self.cursor.execute("SELECT * FROM inventory WHERE quantity < 5")
