@@ -8,6 +8,7 @@ import pandas as pd
 from io import BytesIO
 from email.mime.base import MIMEBase
 from email import encoders
+import threading
 
 
 class InventoryApp:
@@ -219,7 +220,6 @@ class InventoryApp:
 
         tree.pack(fill="both", expand=True)
 
-
     def get_current_quantity(self, part_name):
         self.cursor.execute("SELECT quantity FROM inventory WHERE part_name = ?", (part_name,))
         row = self.cursor.fetchone()
@@ -265,44 +265,58 @@ class InventoryApp:
         self.last_update_label.config(text=f"Last Updated: {current_time}")
 
     def send_email_inventory_updated(self):
-        # Fetch the updated inventory and create a DataFrame for demonstration
-        self.cursor.execute("SELECT * FROM inventory")
-        inventory = self.cursor.fetchall()
-        df = pd.DataFrame(inventory, columns=['Part Name', 'Quantity'])
+        # Define a function to send the email
+        def send_email():
+            # Connect to a new SQLite database
+            conn = sqlite3.connect('inventory.db')
+            cursor = conn.cursor()
 
-        # Email configuration
-        email_sender = "aaravkumarjeet042@gmail.com"
-        email_receiver = "aaravkumarjeet78@gmail.com"
-        email_password = "xkpg pouq ktxj pwjf"
+            # Fetch the updated inventory and create a DataFrame for demonstration
+            cursor.execute("SELECT * FROM inventory")
+            inventory = cursor.fetchall()
+            df = pd.DataFrame(inventory, columns=['Part Name', 'Quantity'])
 
-        # Email content
-        subject = "Inventory Updated"
+            # Close the database connection
+            cursor.close()
+            conn.close()
 
-        # Connect to the SMTP server
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-            server.login(email_sender, email_password)
+            # Email configuration
+            email_sender = "aaravkumarjeet042@gmail.com"
+            email_receiver = "aaravkumarjeet78@gmail.com"
+            email_password = "xkpg pouq ktxj pwjf"
 
-            # Construct the email message
-            msg = MIMEMultipart()
-            msg['From'] = email_sender
-            msg['To'] = email_receiver
-            msg['Subject'] = subject
+            # Email content
+            subject = "Inventory Updated"
 
-            # Convert DataFrame to an Excel file in memory
-            with BytesIO() as output:
-                with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    df.to_excel(writer, index=False)
-                output.seek(0)  # Go to the beginning of the BytesIO stream
+            # Connect to the SMTP server
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+                server.login(email_sender, email_password)
 
-                # Attach the Excel file
-                part = MIMEBase('application', 'vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                part.set_payload(output.read())
-                encoders.encode_base64(part)
-                part.add_header('Content-Disposition', 'attachment', filename='inventory.xlsx')
-                msg.attach(part)
+                # Construct the email message
+                msg = MIMEMultipart()
+                msg['From'] = email_sender
+                msg['To'] = email_receiver
+                msg['Subject'] = subject
 
-            # Send the email
-            server.send_message(msg)
+                # Convert DataFrame to an Excel file in memory
+                with BytesIO() as output:
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        df.to_excel(writer, index=False)
+                    output.seek(0)  # Go to the beginning of the BytesIO stream
+
+                    # Attach the Excel file
+                    part = MIMEBase('application', 'vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                    part.set_payload(output.read())
+                    encoders.encode_base64(part)
+                    part.add_header('Content-Disposition', 'attachment', filename='inventory.xlsx')
+                    msg.attach(part)
+
+                # Send the email
+                server.send_message(msg)
+
+        # Create a thread for sending email
+        email_thread = threading.Thread(target=send_email)
+        email_thread.start()
 
 
 if __name__ == "__main__":
