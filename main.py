@@ -179,8 +179,21 @@ class InventoryApp:
         if not inventory:
             messagebox.showinfo("Inventory", "Inventory is empty")
         else:
-            inventory_str = "\n".join([f"{row[0]}: {row[1]}" for row in inventory])
-            messagebox.showinfo("Inventory", inventory_str)
+            # Create a new window to display the inventory data
+            inventory_window = tk.Toplevel(self.root)
+            inventory_window.title("Inventory")
+
+            # Create a Treeview widget to display inventory data in a grid
+            tree = ttk.Treeview(inventory_window, style="Treeview")
+            tree["columns"] = ("Part Name", "Quantity")
+            tree.heading("#0", text="ID")
+            tree.heading("Part Name", text="Part Name")
+            tree.heading("Quantity", text="Quantity")
+
+            for i, row in enumerate(inventory, start=1):
+                tree.insert("", tk.END, text=str(i), values=row)
+
+            tree.pack(fill="both", expand=True)
 
     def show_low_quantity_parts(self):
         self.cursor.execute("SELECT * FROM inventory WHERE quantity < 5")
@@ -190,8 +203,22 @@ class InventoryApp:
             messagebox.showinfo("Low Quantity Parts", "No parts with quantity less than 5.")
             return
 
-        low_quantity_parts_str = "\n".join([f"{row[0]}: {row[1]}" for row in low_quantity_parts])
-        messagebox.showinfo("Low Quantity Parts", low_quantity_parts_str)
+        # Create a new window to display the low quantity parts data
+        low_quantity_window = tk.Toplevel(self.root)
+        low_quantity_window.title("Low Quantity Parts")
+
+        # Create a Treeview widget to display low quantity parts data in a grid
+        tree = ttk.Treeview(low_quantity_window, style="Treeview")
+        tree["columns"] = ("Part Name", "Quantity")
+        tree.heading("#0", text="ID")
+        tree.heading("Part Name", text="Part Name")
+        tree.heading("Quantity", text="Quantity")
+
+        for i, row in enumerate(low_quantity_parts, start=1):
+            tree.insert("", tk.END, text=str(i), values=row)
+
+        tree.pack(fill="both", expand=True)
+
 
     def get_current_quantity(self, part_name):
         self.cursor.execute("SELECT quantity FROM inventory WHERE part_name = ?", (part_name,))
